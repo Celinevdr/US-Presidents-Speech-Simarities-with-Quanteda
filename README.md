@@ -1,2 +1,2 @@
 # US-Presidents-Speech-Simarities-with-Quanteda
-Analysing the inaugural speeches of US Presidents according to their party affiliation using the Quanteda Package
+I analyse the inaugural speeches of US Presidents using the quanteda package on R. In particular, I develop the following research question: how does the inaugural speeches of Presidents from the Democrat Party differ from the speeches of Republican Presidents? To this aim, I will develop two corpora, one containing the speeches of Democrat Presidents and the other containing the speeches of Republican Presidents. 
