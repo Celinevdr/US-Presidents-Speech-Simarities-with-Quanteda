@@ -1,0 +1,130 @@
+---
+title: "Using the Quanteda Package on US Presidents' inaugural speeches"
+author: "Céline Van den Rul"
+output: html_notebook
+---
+
+# Analysing inaugural speeches of US Presidents according to their party affiliation
+
+I analyse the inaugural speeches of US Presidents using the quanteda package on R. In particular, I develop the following research question: how does the inaugural speeches of Presidents from the Democrat Party differ from the speeches of Republican Presidents? To this aim, I will develop two corpora, one containing the speeches of Democrat Presidents and the other containing the speeches of Republican Presidents. 
+
+```{r}
+install.packages("quanteda")
+library(corpus)
+library(quanteda)
+my_corpus <- corpus(data_corpus_inaugural)
+summary(my_corpus)
+```
+
+### US Presidents from the Democrat Party
+My corpus of Democrat Presidents consists of 18 documents. 
+```{r}
+Dem_speeches <- corpus(data_corpus_inaugural[c(15, 17, 18, 25, 32, 33, 37, 38, 39, 40, 41, 44, 45, 48, 52, 53, 56, 57)])
+summary(Dem_speeches)
+```
+
+### US Presidents from the Republican Party
+My corpus of Democrat Presidents consists of 22 documents.
+
+```{r}
+Rep_speeches <- corpus(data_corpus_inaugural[c(21,22,23,24,26,28,29,30,31,34,35,36,42,43,46,47,49,50,51,54,55,58)])
+summary(Rep_speeches)
+```
+
+### Analysing topics in US President speeches 
+
+#### Which topics do Democrat Presidents cover?
+Quanteda allows us to cluster the speeches of Democrat Presidents according to topics, shown below. We can see that the words "democracy", "change", "public" and "constitution" are reoccuring in various topics.   
+
+```{r}
+install.packages("topicmodels")
+library(topicmodels)
+quant_dfm <- dfm(Dem_speeches, 
+                remove_punct = TRUE, remove_numbers = TRUE, remove = stopwords("english"))
+quant_dfm <- dfm_trim(quant_dfm, min_termfreq = 4, max_docfreq = 10)
+quant_dfm
+
+set.seed(100)
+if (require(topicmodels)) {
+    my_lda_fit20 <- LDA(convert(quant_dfm, to = "topicmodels"), k = 20)
+    get_terms(my_lda_fit20, 5)
+}
+```
+
+#### Which topics do Republican Presidents cover?
+In contrast, topics are found to be different in Republican Presidents' speeches. In the list shown below, we can see that the words "americans", "business" and "together" are occuring most often.  
+```{r}
+install.packages("topicmodels")
+library(topicmodels)
+quant_dfm <- dfm(Rep_speeches, 
+                remove_punct = TRUE, remove_numbers = TRUE, remove = stopwords("english"))
+quant_dfm <- dfm_trim(quant_dfm, min_termfreq = 4, max_docfreq = 10)
+quant_dfm
+
+set.seed(100)
+if (require(topicmodels)) {
+    my_lda_fit20 <- LDA(convert(quant_dfm, to = "topicmodels"), k = 20)
+    get_terms(my_lda_fit20, 5)
+}
+```
+
+### Analysing the most frequent words in US Presidents' speeches
+
+#### What are the most frequent words used by Democrat Presidents?
+The table below shows the most frequent words used by Democrat Presidents, after having carefully removed stopwords and punctuations.   
+```{r}
+my_dfm <- dfm(Dem_speeches, remove = stopwords("english"), remove_punct = TRUE)
+my_dfm[, 1:5]
+topfeatures(my_dfm, 20)
+```
+
+This is further visualised in the Wordcloud below.
+```{r}
+set.seed(100)
+textplot_wordcloud(my_dfm, min_count = 20, random_order = FALSE,
+                   rotation = .25, 
+                   color = RColorBrewer::brewer.pal(8,"Dark2"))
+```
+
+#### What are the most frequent words used by Republican Presidents?
+The table below shows the most frequent words used by Republican Presidents, after having carefully removed stopwords and punctuations.   
+```{r}
+my_dfm_Rep <- dfm(Rep_speeches, remove = stopwords("english"), remove_punct = TRUE)
+my_dfm_Rep[, 1:5]
+topfeatures(my_dfm_Rep, 20)
+```
+
+Here again, I visualiwse it in the Wordcloud below.
+```{r}
+set.seed(100)
+textplot_wordcloud(my_dfm_Rep, min_count = 20, random_order = FALSE,
+                   rotation = .25, 
+                   color = RColorBrewer::brewer.pal(8,"Dark2"))
+```
+
+#### What do these results show?
+From the analysis above, we can see how similar the speeches of both Democrat and Republican Presidents actually are. Both centre around the words "people", "world", "us", "government". Equally, the verbs "can" and "must" are extensively used in speeches of Presidents from both parties. 
+
+### Analysing similarities in recent US President speeches
+
+I now look at the similarities of the most recent speech by a Democrat President, that is the one by President Obama in 2013, with the ones by former Democrat Presidents. It is interesting to see that, overall, the level of similarities icreases over time: the level of similarity to Polk's speech in 1845 is relatively low (0.39) compared to that of Clinton in 1997 (0.64). However, this increase is not steady and consistent and we can see for instance that Obama's speech has more similarities with Roosevelt's 1941 speech than his 1945 speech.  
+```{r}
+pres_dfm <- dfm((Dem_speeches), 
+               remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
+obama_simil <- textstat_simil(pres_dfm, "2013-Obama", 
+                             margin = "documents", method = "cosine")
+obama_simil
+```
+
+I now look at the similarities in the recent speech by President Trump in 2017 with the speeches of former Republican candidates. In contrast to Obama, the level of similiarity of Trump's speech with former Republican Presidents is lower, reaching  a maximum of 0.538 with President Bush's 2005 inaugural speech. However, similar to Obama's case, the level of similiarity in general over time increases: the level of similarity to Grant's speech in 1869 is relatively low (0.35) compared to that of Bush in 2005 (0.538). This increase is however also not steady and consistant over time, indicating the popularity of some Republican President speeches over others. 
+
+```{r}
+pres_dfm <- dfm((Rep_speeches), 
+               remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
+trump_simil <- textstat_simil(pres_dfm, "2017-Trump", 
+                             margin = "documents", method = "cosine")
+trump_simil
+```
+
+### Conclusion
+In conclusion we can see that there aren't a lot of differences between the speeches of Democrat and Republican Presidents. Only the Topic Models approach showed some differences in the topics addresses by Democrat and Republican Presidents. However, the choice of words is relatively similar, as shown by the document-feature-matrix and the wordcloud. Finally, taking a more detailed look at Obama's speech we see slightly higher levels of similarities with former Democrat Presidents in comparison to the level of similiarity of Trump's speech with former Republican Presidents.
